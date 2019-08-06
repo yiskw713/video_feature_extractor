@@ -3,7 +3,6 @@ import glob
 import h5py
 import os
 import pandas as pd
-import tqdm
 from class_label_map import get_class_label_map
 
 
@@ -64,9 +63,8 @@ def main():
         df['n_frames'] = 0
 
         # adding the number of frames to dataframe
-        for i in tqdm.tqdm(range(len(df))):
+        for i in range(len(df)):
             video_dir = os.path.join(args.dataset_dir, df.iloc[i]['video'])
-
             if os.path.exists(video_dir):
                 n_frames = glob.glob(os.path.join(video_dir, '*'))
                 df.iloc[i]['n_frames'] = n_frames
@@ -75,8 +73,6 @@ def main():
                     video = f['video']
                     n_frames = len(video)
                     df.iloc[i]['n_frames'] = n_frames
-            else:
-                continue
 
         # remove videos which have fewer frames
         df = df[df['n_frames'] >= args.th]
