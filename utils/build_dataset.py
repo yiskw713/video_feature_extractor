@@ -64,7 +64,7 @@ def main():
         df['n_frames'] = 0
 
         # adding the number of frames to dataframe
-        for i in tqdm.taqdm(range(len(df))):
+        for i in tqdm.tqdm(range(len(df))):
             video_dir = os.path.join(args.dataset_dir, df.iloc[i]['video'])
 
             if os.path.exists(video_dir):
