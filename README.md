@@ -1,10 +1,11 @@
-### Video Feature Extractor
-This repo is for finituinig 3dcnn and extracting video features.
+# Video Feature Extractor
+This repo is for extracting video features.
+You can also finetune a pretrained model on your own setting.
 
-### Dataset
+## Dataset
 Supported datasets are Kinetics400, Kinetics700, MSR-VTT.
 
-### Requirements
+## Requirements
 * python 3.x
 * pytorch >= 1.0
 * torchvision
@@ -19,13 +20,13 @@ Supported datasets are Kinetics400, Kinetics700, MSR-VTT.
 * pyhd
 * (accimage)
 
-### Pretrained Models
+## Pretrained Models
 You can download from [here](https://drive.google.com/drive/folders/1pBp4pkhRP-ucd4mRGiX0omDQ5hbg3c7a?usp=sharing)
 
-### Extracting and Save Video Features
+## Extracting and Save Video Features
 Coming soon.
 
-### Finetunig on Your Own Setting
+## Finetunig on Your Own Setting
 Make a directory in `./result/` and create your configuration file into it.
 Then run `python finetuning.py ./result/****/config.yaml`
 Follow the below example for a configuration file.
@@ -63,6 +64,6 @@ result_path: ./result/r50_k700_64f_dsr2
 
 ```
 
-### References
+## References
 * [3D-ResNets-PyTorch](https://github.com/kenshohara/3D-ResNets-PyTorch)
 * [pytorch-i3d](https://github.com/piergiaj/pytorch-i3d)
