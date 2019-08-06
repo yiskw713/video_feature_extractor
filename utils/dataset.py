@@ -65,7 +65,7 @@ def train_video_loader(
             start_frame = np.random.randint(
                 0, n_frames - input_frames * temp_downsamp_rate)
             clip = []
-            for i in range(start_frame, start_frame + input_frames, temp_downsamp_rate):
+            for i in range(start_frame, start_frame + input_frames * temp_downsamp_rate, temp_downsamp_rate):
                 img = Image.open(io.BytesIO(video[i]))
 
                 if transform is not None:
