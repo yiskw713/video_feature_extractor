@@ -65,3 +65,4 @@ result_path: ./result/r50_k700_64f_dsr2
 
 ### References
 * [3D-ResNets-PyTorch](https://github.com/kenshohara/3D-ResNets-PyTorch)
+* [pytorch-i3d](https://github.com/piergiaj/pytorch-i3d)
