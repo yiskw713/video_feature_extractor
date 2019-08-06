@@ -101,7 +101,7 @@ def feature_extract_loader(
             clip.append(img)
 
     elif image_file_format == 'hdf5':
-        with h5py.File(video_path, 'r') as f:
+        with h5py.File(video_path + '.hdf5', 'r') as f:
             video = f['video']
             n_frames = len(video)
             clip = []
