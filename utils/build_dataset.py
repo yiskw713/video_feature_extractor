@@ -1,7 +1,9 @@
+import argparse
 import glob
+import h5py
 import os
 import pandas as pd
-import argparse
+import tqdm
 from class_label_map import get_class_label_map
 
 
@@ -23,6 +25,9 @@ def get_arguments():
         '--orig_val_csv', type=str, default='./dataset/original/kinetics-400_val.csv', help='path to the original kinetics dataset val csv')
     parser.add_argument(
         '--save_path', type=str, default='./dataset', help='path where you want to save csv files')
+    parser.add_argument(
+        '--th', type=int, default=128,
+        help='threshold value which determines whether videos will be removed or not.')
 
     return parser.parse_args()
 
@@ -55,27 +60,33 @@ def main():
         if 'is_cc' in df.columns:
             del df['is_cc']
 
-        for i in range(len(df)):
+        # add a new column for the number of frames
+        df['n_frames'] = 0
+
+        # adding the number of frames to dataframe
+        for i in tqdm.taqdm(range(len(df))):
             video_dir = os.path.join(args.dataset_dir, df.iloc[i]['video'])
 
-            # confirm if video directory and n_frames file exist or not.
             if os.path.exists(video_dir):
-                n_f = glob.glob(os.path.join(video_dir, '*'))
-                if len(n_f) > 128:
-                    continue
-                else:
-                    # remove videos which have relatively few frames
-                    df.drop(i)
+                n_frames = glob.glob(os.path.join(video_dir, '*'))
+                df.iloc[i]['n_frames'] = n_frames
             elif os.path.exists(video_dir + '.hdf5'):
-                continue
+                with h5py.File(video_dir + '.hdf5', 'r') as f:
+                    video = f['video']
+                    n_frames = len(video)
+                    df.iloc[i]['n_frames'] = n_frames
             else:
-                # remove videos which do not exist
-                df.drop(i)
+                continue
+
+        # remove videos which have fewer frames
+        df = df[df['n_frames'] >= args.th]
 
     df_train.to_csv(
         os.path.join(args.save_path, 'kinetics_{}_train.csv'.format(args.n_classes)), index=None)
     df_val.to_csv(
         os.path.join(args.save_path, 'kinetics_{}_val.csv'.format(args.n_classes)), index=None)
+
+    print('Done!')
 
 
 if __name__ == '__main__':
