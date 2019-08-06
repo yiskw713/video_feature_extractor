@@ -67,12 +67,12 @@ def main():
             video_dir = os.path.join(args.dataset_dir, df.iloc[i]['video'])
             if os.path.exists(video_dir):
                 n_frames = glob.glob(os.path.join(video_dir, '*'))
-                df.iloc[i]['n_frames'] = n_frames
+                df['n_frames'][i] = n_frames
             elif os.path.exists(video_dir + '.hdf5'):
                 with h5py.File(video_dir + '.hdf5', 'r') as f:
                     video = f['video']
                     n_frames = len(video)
-                    df.iloc[i]['n_frames'] = n_frames
+                    df['n_frames'][i] = n_frames
 
         # remove videos which have fewer frames
         df = df[df['n_frames'] >= args.th]
