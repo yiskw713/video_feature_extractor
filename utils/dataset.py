@@ -149,6 +149,7 @@ class Kinetics(Dataset):
                 self.loader, video_path, self.transform,
                 self.config.temp_downsamp_rate, self.config.image_file_format
             )
+            return clip
         else:
             clip = train_video_loader(
                 self.loader, video_path, self.config.input_frames,
@@ -156,12 +157,59 @@ class Kinetics(Dataset):
                 self.config.image_file_format
             )
 
+            # clip.shape => (C, T, H, W)
+            clip = torch.stack(clip, 0).permute(1, 0, 2, 3)
+
+            sample = {
+                'clip': clip,
+                'cls_id': cls_id,
+            }
+
+            return sample
+
+
+class MSR_VTT(Dataset):
+    """
+    Dataset class for MSR-VTT
+    """
+
+    def __init__(self, dataset_dir, temp_downsamp_rate=2, image_file_format='hdf5', transform=None):
+        super().__init__()
+
+        self.dataset_dir = dataset_dir
+        self.image_file_format = image_file_format
+        self.temp_downsamp_rate = temp_downsamp_rate
+
+        if self.image_file_format == 'hdf5':
+            self.video = glob.glob(os.path.join(self.dataset_dir, '*.hdf5'))
+        elif (self.image_file_format == 'jpg') or (self.image_file_format == 'png'):
+            self.video = glob.glob(self.dataset_dir)
+        else:
+            print('You have to choose "jpg", "png" or "hdf5" as image file format.')
+            sys.exit(1)
+
+        self.transform = transform
+        self.loader = get_default_image_loader()
+
+    def __len__(self):
+        return len(self.video)
+
+    def __getitem__(self, idx):
+        video_path = self.video[idx]
+
+        clip = feature_extract_loader(
+            self.loader, video_path, self.transform,
+            self.temp_downsamp_rate, self.image_file_format
+        )
+
         # clip.shape => (C, T, H, W)
         clip = torch.stack(clip, 0).permute(1, 0, 2, 3)
 
+        video_id = os.path.relpath(video_path, self.video_dir)
+
         sample = {
             'clip': clip,
-            'cls_id': cls_id,
+            'video_id': video_id,
         }
 
         return sample

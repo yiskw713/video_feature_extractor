@@ -24,7 +24,9 @@ Supported datasets are Kinetics400, Kinetics700, MSR-VTT.
 You can download from [here](https://drive.google.com/drive/folders/1pBp4pkhRP-ucd4mRGiX0omDQ5hbg3c7a?usp=sharing)
 
 ## Extracting and Save Video Features
-Coming soon.
+Please run ``` python extract.py [dataset_dir] [save_dir] [arch] [--n_classes] [--num_workers] [--temp_downsamp_rate [--image_file_format]```.
+
+Now only MSR-VTT dataset is supported.
 
 ## Finetunig on Your Own Setting
 Make a directory in `./result/` and create your configuration file into it.
