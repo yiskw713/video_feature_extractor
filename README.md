@@ -17,7 +17,6 @@ Supported datasets are Kinetics400, Kinetics700, MSR-VTT.
 * PyYAML
 * addict
 * tensorboardX
-* pyhd
 * (accimage)
 
 ## Pretrained Models
