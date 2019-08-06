@@ -19,10 +19,6 @@ from utils.class_weight import get_class_weight
 from utils.dataset import Kinetics
 from utils.mean import get_mean, get_std
 from model import resnet
-from model import slowfast
-from model.metric import L2ConstrainedLinear
-from model.msc import SpatialMSC, TemporalMSC, SpatioTemporalMSC
-from model import resnext
 
 
 def get_arguments():
@@ -185,7 +181,6 @@ def validate(val_loader, model, criterion, config, device):
             if i % 1000 == 0:
                 progress.display(i)
 
-    # TODO: 各GPUの出力をどう揃えるか
     return losses.avg, top1.avg, top5.avg
 
 
@@ -220,7 +215,6 @@ def main():
             ToTensor(),
             normalize,
         ]),
-        mode='validation'
     )
 
     train_loader = DataLoader(
@@ -242,31 +236,20 @@ def main():
     print('\n------------------------Loading Model------------------------\n')
 
     if CONFIG.model == 'resnet18':
-        print(CONFIG.model + ' will be used as a model.')
+        print('ResNet18 will be used as a model.')
         model = resnet.generate_model(18, n_classes=CONFIG.n_classes)
     elif CONFIG.model == 'resnet50':
-        print('ResNext101 will be used as a model.')
-        model = resnext.generate_model(101, n_classes=CONFIG.n_classes)
+        print('ResNet50 will be used as a model.')
+        model = resnet.generate_model(50, n_classes=CONFIG.n_classes)
     else:
-        print('resnet18 will be used as a model.')
+        print('There is no model appropriate to your choice. '
+              'Instead, resnet18 will be used as a model.')
         model = resnet.generate_model(18, n_classes=CONFIG.n_classes)
 
-    # metric
-    if CONFIG.metric == 'L2constrain':
-        print('L2constrain metric will be used.')
-        model.fc = L2ConstrainedLinear(
-            model.fc.in_features, model.fc.out_features)
-
-    # multi-scale input
-    if CONFIG.msc == 'Temporal':
-        print('Temporal multi-scale input will be used')
-        model = TemporalMSC(model)
-    elif CONFIG.msc == 'Spatial':
-        print('Spatial multi-scale input will be used')
-        model = SpatialMSC(model)
-    elif CONFIG.msc == 'SpatioTemporal':
-        print('SpatioTemporal multi-scale input will be used')
-        model = SpatioTemporalMSC(model)
+    # load pretrained model
+    if CONFIG.pretrained_weights is not None:
+        state_dict = torch.load(CONFIG.pretrained_weights)
+        model.load_state_dict(state_dict)
 
     # set optimizer, lr_scheduler
     if CONFIG.optimizer == 'Adam':
@@ -280,11 +263,16 @@ def main():
             momentum=CONFIG.momentum,
             dampening=CONFIG.dampening,
             weight_decay=CONFIG.weight_decay,
-            nesterov=CONFIG.nesterov)
+            nesterov=CONFIG.nesterov
+        )
     elif CONFIG.optimizer == 'AdaBound':
         print(CONFIG.optimizer + ' will be used as an optimizer.')
         optimizer = adabound.AdaBound(
-            model.parameters(), lr=CONFIG.learning_rate, final_lr=CONFIG.final_lr, weight_decay=CONFIG.weight_decay)
+            model.parameters(),
+            lr=CONFIG.learning_rate,
+            final_lr=CONFIG.final_lr,
+            weight_decay=CONFIG.weight_decay
+        )
     else:
         print('There is no optimizer which suits to your option. \
             Instead, SGD will be used as an optimizer.')
@@ -294,12 +282,14 @@ def main():
             momentum=CONFIG.momentum,
             dampening=CONFIG.dampening,
             weight_decay=CONFIG.weight_decay,
-            nesterov=CONFIG.nesterov)
+            nesterov=CONFIG.nesterov
+        )
 
     # learning rate scheduler
     if CONFIG.optimizer == 'SGD':
         scheduler = optim.lr_scheduler.ReduceLROnPlateau(
-            optimizer, 'min', patience=CONFIG.lr_patience)
+            optimizer, 'min', patience=CONFIG.lr_patience
+        )
     else:
         scheduler = None
 
@@ -315,101 +305,122 @@ def main():
 
     # resume if you want
     begin_epoch = 0
+    best_acc1 = 0
     log = None
     if args.resume:
         if os.path.exists(os.path.join(CONFIG.result_path, 'checkpoint.pth')):
             print('loading the checkpoint...')
-            begin_epoch, model, optimizer, scheduler = resume(
+            begin_epoch, model, optimizer, best_acc1, scheduler = resume(
                 CONFIG, model, optimizer, scheduler)
             print('training will start from {} epoch'.format(begin_epoch))
+        else:
+            print("there is no checkpoint at the result folder")
         if os.path.exists(os.path.join(CONFIG.result_path, 'log.csv')):
+            print('loading the log file...')
             log = pd.read_csv(os.path.join(CONFIG.result_path, 'log.csv'))
-
-    # generate log when you start training from scratch
-    if log is None:
-        log = pd.DataFrame(
-            columns=['epoch', 'lr', 'train_loss', 'val_loss', 'acc@1', 'acc@5']
-        )
+        else:
+            print("there is no log file at the result folder.")
+            print('Making a log file...')
+            log = pd.DataFrame(
+                columns=['epoch', 'lr', 'train_loss', 'val_loss', 'train_acc@1',
+                         'train_acc@5', 'val_acc@1', 'val_acc@5']
+            )
 
     # criterion for loss
     if CONFIG.class_weight:
         criterion = nn.CrossEntropyLoss(
-            weight=get_class_weight().to(device))
+            weight=get_class_weight(n_classes=CONFIG.n_classes).to(device)
+        )
     else:
         criterion = nn.CrossEntropyLoss()
 
     # train and validate model
     print('\n------------------------Start training------------------------\n')
-    losses_train = []
-    losses_val = []
-    top1_accuracy = []
-    top5_accuracy = []
-    best_top1_accuracy = 0.0
-    best_top5_accuracy = 0.0
+    train_losses = []
+    val_losses = []
+    train_top1_accuracy = []
+    train_top5_accuracy = []
+    val_top1_accuracy = []
+    val_top5_accuracy = []
 
     for epoch in range(begin_epoch, CONFIG.max_epoch):
 
         # training
-        loss_train = train(
-            model, train_loader, criterion, optimizer, CONFIG, device)
-        losses_train.append(loss_train)
+        train_loss, train_acc1, train_acc5 = train(
+            train_loader, model, criterion, optimizer, epoch, CONFIG, device)
+
+        train_losses.append(train_loss)
+        train_top1_accuracy.append(train_acc1)
+        train_top5_accuracy.append(train_acc5)
 
         # validation
-        loss_val, top1, top5 = validation(
-            model, val_loader, criterion, CONFIG, device)
+        val_loss, val_acc1, val_acc5 = validate(
+            val_loader, model, criterion, CONFIG, device)
 
+        val_losses.append(val_loss)
+        val_top1_accuracy.append(val_acc1)
+        val_top5_accuracy.append(val_acc5)
+
+        # scheduler
         if CONFIG.optimizer == 'SGD':
-            scheduler.step(loss_val)
+            scheduler.step(val_loss)
 
-        losses_val.append(loss_val)
-        top1_accuracy.append(top1)
-        top5_accuracy.append(top5)
-
-        # save a model if topk accuracy is higher than ever
+        # save a model if top1 acc is higher than ever
         # save base models, NOT DataParalled models
-        if best_top1_accuracy < top1_accuracy[-1]:
-            best_top1_accuracy = top1_accuracy[-1]
+        if best_acc1 < val_acc1:
+            best_acc1 = val_acc1
             torch.save(
-                model.module.state_dict(), os.path.join(CONFIG.result_path, 'best_top1_accuracy_model.prm'))
-
-        if best_top5_accuracy < top5_accuracy[-1]:
-            best_top5_accuracy = top5_accuracy[-1]
-            torch.save(
-                model.module.state_dict(), os.path.join(CONFIG.result_path, 'best_top5_accuracy_model.prm'))
+                model.module.state_dict(),
+                os.path.join(CONFIG.result_path, 'best_acc1_model.prm')
+            )
 
         # save checkpoint every epoch
-        save_checkpoint(CONFIG, epoch, model, optimizer, scheduler)
+        save_checkpoint(
+            CONFIG, epoch, model.module, optimizer, best_acc1, scheduler)
 
         # save a model every 10 epoch
         # save base models, NOT DataParalled models
         if epoch % 10 == 0 and epoch != 0:
             torch.save(
-                model.module.state_dict(), os.path.join(CONFIG.result_path, 'epoch_{}_model.prm'.format(epoch)))
+                model.module.state_dict(),
+                os.path.join(
+                    CONFIG.result_path, 'epoch_{}_model.prm'.format(epoch))
+            )
 
         # tensorboardx
         if writer is not None:
-            writer.add_scalar("loss_train", losses_train[-1], epoch)
-            writer.add_scalar('loss_val', losses_val[-1], epoch)
-            writer.add_scalars("iou", {
-                'top1_accuracy': top1_accuracy[-1],
-                'top5_accuracy': top5_accuracy[-1]}, epoch)
+            writer.add_scalars("loss", {
+                'train': train_losses[-1],
+                'val': val_losses[-1]
+            }, epoch)
+            writer.add_scalars("train_acc", {
+                'top1': train_top1_accuracy[-1],
+                'top5': train_top5_accuracy[-1]
+            }, epoch)
+            writer.add_scalars("val_acc", {
+                'top1': val_top1_accuracy[-1],
+                'top5': val_top5_accuracy[-1]
+            }, epoch)
 
         # write logs to dataframe and csv file
         tmp = pd.Series([
             epoch,
             scheduler.get_lr()[0],
-            losses_train[-1],
-            losses_val[-1],
-            top1_accuracy[-1],
-            top5_accuracy[-1],
+            train_losses[-1],
+            val_losses[-1],
+            train_top1_accuracy[-1],
+            train_top5_accuracy[-1],
+            val_top1_accuracy[-1],
+            val_top5_accuracy[-1],
         ], index=log.columns)
 
         log = log.append(tmp, ignore_index=True)
         log.to_csv(os.path.join(CONFIG.result_path, 'log.csv'), index=False)
 
         print(
-            'epoch: {}\tloss train: {:.5f}\tloss val: {:.5f}\ttop1_accuracy: {:.5f}\ttop5_accuracy: {:.5f}'
-            .format(epoch, losses_train[-1], losses_val[-1], top1_accuracy[-1], top5_accuracy[-1])
+            'epoch: {}\tlr: {}\tloss train: {:.4f}\tloss val: {:.4f}\tval_acc1: {:.5f}\tval_acc5: {:.4f}'
+            .format(epoch, scheduler.get_lr()[0], train_losses[-1],
+                    val_losses[-1], val_top1_accuracy[-1], val_top5_accuracy[-1])
         )
 
     # save base models, NOT DataParalled models
