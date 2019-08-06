@@ -63,25 +63,14 @@ def train_video_loader(
             video = f['video']
             n_frames = len(video)
             clip = []
-            if (n_frames - input_frames * temp_downsamp_rate) > 1:
-                start_frame = np.random.randint(
-                    0, n_frames - input_frames * temp_downsamp_rate)
+            start_frame = np.random.randint(
+                0, n_frames - input_frames * temp_downsamp_rate)
 
-                for i in range(start_frame, start_frame + input_frames * temp_downsamp_rate, temp_downsamp_rate):
-                    img = Image.open(io.BytesIO(video[i]))
-                    if transform is not None:
-                        img = transform(img)
-                    clip.append(img)
-            else:
-                # not apply to downsampling
-                start_frame = np.random.randint(
-                    0, n_frames - input_frames)
-
-                for i in range(start_frame, start_frame + input_frames, 1):
-                    img = Image.open(io.BytesIO(video[i]))
-                    if transform is not None:
-                        img = transform(img)
-                    clip.append(img)
+            for i in range(start_frame, start_frame + input_frames * temp_downsamp_rate, temp_downsamp_rate):
+                img = Image.open(io.BytesIO(video[i]))
+                if transform is not None:
+                    img = transform(img)
+                clip.append(img)
     else:
         print('You have to choose "jpg", "png" or "hdf5" as image file format.')
         sys.exit(1)
