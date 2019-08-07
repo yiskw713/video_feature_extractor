@@ -21,4 +21,4 @@ eval "$(pyenv virtualenv-init -)"
 pyenv global torch
 cd /home/aab10820pu/video_feature_extractor
 
-python extract.py /groups1/gaa50131/datasets/MSR-VTT/TrainValHdf5 ./features/base resnet50 ./weights/resnet50_kinetics700.pth 
+python extract.py /groups1/gaa50131/datasets/MSR-VTT/TrainValHdf5 ./features/msr-vtt resnet50 ./weights/resnet50_kinetics700.pth 

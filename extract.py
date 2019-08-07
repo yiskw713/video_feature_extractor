@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import tqdm
 
+from joblib import Parallel, delayed
 from torch.utils.data import DataLoader
 from torchvision.transforms import Compose, ToTensor, CenterCrop, Normalize
 
@@ -33,26 +34,37 @@ def get_arguments():
     parser.add_argument(
         '--num_workers', type=int, default=4, help='the number of workes for data loding')
     parser.add_argument(
+        '--batch_size', type=int, default=64, help='batch size')
+    parser.add_argument(
         '--temp_downsamp_rate', type=int, default=2, help='temporal downsampling rate (default: 2)')
     parser.add_argument(
         '--image_file_format', type=str, default='hdf5', help=' jpg | png | hdf5 ')
+    parser.add_argument(
+        '--n_jobs', type=int, default=-1, help='the number of cores which save feats')
 
     return parser.parse_args()
 
 
-def extract(model, loader, save_dir, device):
+def save_feats(feats, video_id, save_dir):
+    # feats.shape => (C, T, H, W)
+    torch.save(feats, os.path.join(save_dir, video_id + '.pth'))
+
+
+def extract(model, loader, save_dir, n_jobs, device):
     model.eval()
 
     for sample in tqdm.tqdm(loader, total=len(loader)):
         with torch.no_grad():
-            # batchsize = 1
             x = sample['clip'].to(device)
-            video_id = sample['video_id'][0]
+            video_id = sample['video_id']
+
+            batch_size = x.shape[0]
 
             feats = model(x)
             feats = feats.to('cpu')
 
-            torch.save(feats, os.path.join(save_dir, video_id + '.pth'))
+            Parallel(n_jobs=n_jobs)(
+                [delayed(save_feats)(feats[i], video_id[i], save_dir) for i in range(batch_size)])
 
 
 def main():
@@ -100,11 +112,14 @@ def main():
     # send the model to cuda/cpu
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     model.to(device)
+    if device == 'cuda':
+        model = torch.nn.DataParallel(model)  # make parallel
+        torch.backends.cudnn.benchmark = True
 
     # extract and save features
     print('\n------------------------Start extracting features------------------------\n')
 
-    extract(model, loader, args.save_dir, device)
+    extract(model, loader, args.save_dir, args.n_jobs, device)
 
     print("Done!")
 

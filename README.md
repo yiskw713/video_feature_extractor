@@ -13,6 +13,7 @@ Supported datasets are Kinetics400, Kinetics700, MSR-VTT.
 * numpy
 * Pillow
 * h5py
+* joblib
 * tqdm
 * PyYAML
 * addict
