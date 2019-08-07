@@ -30,7 +30,7 @@ def get_arguments():
     parser.add_argument(
         'save_dir', type=str, help='path to the directory you want to save video features')
     parser.add_argument(
-        'arch', type=str, help='model architecture. (resnet50)')
+        'arch', type=str, help='model architecture. (slowfast152_nl)')
     parser.add_argument(
         'pretrained_weights', type=str, help='path to the pretrained model')
     parser.add_argument(
