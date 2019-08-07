@@ -3,6 +3,9 @@ import glob
 import h5py
 import os
 import pandas as pd
+
+from joblib import Parallel, delayed
+
 from class_label_map import get_class_label_map
 
 
@@ -27,8 +30,27 @@ def get_arguments():
     parser.add_argument(
         '--th', type=int, default=128,
         help='threshold value which determines whether videos will be removed or not.')
+    parser.add_argument(
+        '--n_jobs', type=int, default=-1, help='the number of cores which load files')
 
     return parser.parse_args()
+
+
+def count_n_frames(df, i, dataset_dir):
+    """ count the number of frames for each video """
+
+    video_dir = os.path.join(dataset_dir, df.iloc[i]['video'])
+    if os.path.exists(video_dir):
+        n_frames = len(glob.glob(os.path.join(video_dir, '*.jpg')))
+    elif os.path.exists(video_dir + '.hdf5'):
+        with h5py.File(video_dir + '.hdf5', 'r') as f:
+            video = f['video']
+            n_frames = len(video)
+
+    if i % 10000 == 0:
+        print(i, flush=True)
+
+    return n_frames, i
 
 
 def main():
@@ -43,7 +65,10 @@ def main():
 
     for i in range(len(df)):
         path.append(
-            df.iloc[i]['label'] + '/' + df.iloc[i]['youtube_id'] + '_' + str(df.iloc[i]['time_start']).zfill(6) + '_' + str(df.iloc[i]['time_end']).zfill(6))
+            df.iloc[i]['label'] + '/' + df.iloc[i]['youtube_id'] + '_'
+            + str(df.iloc[i]['time_start']).zfill(6) + '_'
+            + str(df.iloc[i]['time_end']).zfill(6)
+        )
         cls_id.append(class_label_map[df.iloc[i]['label']])
 
     df['class_id'] = cls_id
@@ -57,20 +82,18 @@ def main():
     if 'is_cc' in df.columns:
         del df['is_cc']
 
-    # add a new column for the number of frames
-    df['n_frames'] = 0
+    print('Adding information about the number of frames...')
 
-    # adding the number of frames to dataframe
-    for i in range(len(df)):
-        video_dir = os.path.join(args.dataset_dir, df.iloc[i]['video'])
-        if os.path.exists(video_dir):
-            n_frames = glob.glob(os.path.join(video_dir, '*'))
-            df['n_frames'][i] = n_frames
-        elif os.path.exists(video_dir + '.hdf5'):
-            with h5py.File(video_dir + '.hdf5', 'r') as f:
-                video = f['video']
-                n_frames = len(video)
-                df['n_frames'][i] = n_frames
+    # count the number of frames for each video
+    processed_data = Parallel(n_jobs=args.n_jobs)(
+        [delayed(count_n_frames)(df, i, args.dataset_dir) for i in range(len(df))])
+
+    # sort the list with original index
+    processed_data.sort(key=lambda x: x[1])
+    processed_data = [p[0] for p in processed_data]
+
+    # adding the information about the number of frames that each video has
+    df['n_frames'] = processed_data
 
     # remove videos which have fewer frames
     df = df[df['n_frames'] >= args.th]
