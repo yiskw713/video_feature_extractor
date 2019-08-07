@@ -44,12 +44,15 @@ def extract(model, loader, save_dir, device):
     model.eval()
 
     for sample in tqdm.tqdm(loader, total=len(loader)):
-        x = sample['clip'].to(device)
-        video_id = sample['video_id']
+        with torch.no_grad():
+            # batchsize = 1
+            x = sample['clip'].to(device)
+            video_id = sample['video_id'][0]
 
-        feats = model(x)
+            feats = model(x)
+            feats = feats.to('cpu')
 
-        torch.save(feats, os.path.join(save_dir, video_id + '.pth'))
+            torch.save(feats, os.path.join(save_dir, video_id + '.pth'))
 
 
 def main():

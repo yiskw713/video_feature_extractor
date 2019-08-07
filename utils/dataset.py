@@ -59,7 +59,9 @@ def train_video_loader(
             clip.append(img)
 
     elif image_file_format == 'hdf5':
-        with h5py.File(video_path + '.hdf5', 'r') as f:
+        if video_path[-5:] != '.hdf5':
+            video_path += '.hdf5'
+        with h5py.File(video_path, 'r') as f:
             video = f['video']
             n_frames = len(video)
             clip = []
@@ -101,7 +103,9 @@ def feature_extract_loader(
             clip.append(img)
 
     elif image_file_format == 'hdf5':
-        with h5py.File(video_path + '.hdf5', 'r') as f:
+        if video_path[-5:] != '.hdf5':
+            video_path += '.hdf5'
+        with h5py.File(video_path, 'r') as f:
             video = f['video']
             n_frames = len(video)
             clip = []
@@ -205,7 +209,7 @@ class MSR_VTT(Dataset):
         # clip.shape => (C, T, H, W)
         clip = torch.stack(clip, 0).permute(1, 0, 2, 3)
 
-        video_id = os.path.relpath(video_path, self.video_dir)
+        video_id = os.path.relpath(video_path, self.dataset_dir)
 
         sample = {
             'clip': clip,
