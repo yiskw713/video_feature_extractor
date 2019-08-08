@@ -1,4 +1,5 @@
 ### experiment details
+
 * kinetics700
 * 3d resnet 50
 * the number of input frames is 64

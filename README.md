@@ -21,7 +21,7 @@ Supported datasets are Kinetics400, Kinetics700, MSR-VTT.
 * (accimage)
 
 ## Pretrained Models
-Supported models are 3DResNet, SlowFastNetwork with non local block, (I3D).
+Supported models are 3DResNet, SlowFastNetwork with non local block, (I3D).  
 You can download from [here](https://drive.google.com/drive/folders/1pBp4pkhRP-ucd4mRGiX0omDQ5hbg3c7a?usp=sharing)
 Pretrained I3D is not available yet.
 
