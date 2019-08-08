@@ -1,10 +1,6 @@
 import argparse
-import glob
-import h5py
 import os
 import pandas as pd
-
-from joblib import Parallel, delayed
 
 from class_label_map import get_class_label_map
 
@@ -40,6 +36,7 @@ def main():
 
     path = []
     cls_id = []
+    exists = []
 
     for i in range(len(df)):
         path.append(
@@ -49,20 +46,6 @@ def main():
         )
         cls_id.append(class_label_map[df.iloc[i]['label']])
 
-    df['class_id'] = cls_id
-    df['video'] = path
-
-    # delete useless columns
-    del df['youtube_id']
-    del df['time_start']
-    del df['time_end']
-    del df['split']
-    if 'is_cc' in df.columns:
-        del df['is_cc']
-
-    exists = []
-
-    for i in range(len(df)):
         video_dir = os.path.join(args.dataset_dir, df.iloc[i]['video'])
         if os.path.exists(video_dir):
             exists.append(1)
@@ -71,8 +54,19 @@ def main():
         else:
             exists.append(0)
 
+    df['class_id'] = cls_id
+    df['video'] = path
     df['exists'] = exists
     df = df[df['exists'] == 1]
+
+    # delete useless columns
+    del df['youtube_id']
+    del df['time_start']
+    del df['time_end']
+    del df['split']
+    del df['exists']
+    if 'is_cc' in df.columns:
+        del df['is_cc']
 
     df.to_csv(
         os.path.join(
