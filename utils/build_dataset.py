@@ -46,6 +46,8 @@ def count_n_frames(df, i, dataset_dir):
         with h5py.File(video_dir + '.hdf5', 'r') as f:
             video = f['video']
             n_frames = len(video)
+    else:
+        n_frames = 0
 
     if i % 10000 == 0:
         print(i, flush=True)
