@@ -190,7 +190,8 @@ class InceptionI3d(nn.Module):
     )
 
     def __init__(self, num_classes=400, spatial_squeeze=True,
-                 final_endpoint='Logits', name='inception_i3d', in_channels=3, dropout_keep_prob=0.5):
+                 final_endpoint='Logits', name='inception_i3d',
+                 in_channels=3, dropout_keep_prob=0.5):
         """Initializes I3D model instance.
         Args:
             num_classes: The number of outputs in the logit layer (default 400, which
@@ -319,16 +320,14 @@ class InceptionI3d(nn.Module):
             return
 
         end_point = 'Logits'
-        self.avg_pool = nn.AvgPool3d(kernel_size=[2, 7, 7],
-                                     stride=(1, 1, 1))
+        self.avg_pool = nn.AdaptiveAvgPool3d((1, 1, 1))
         self.dropout = nn.Dropout(dropout_keep_prob)
-        self.logits = Unit3D(in_channels=384+384+128+128, output_channels=self._num_classes,
-                             kernel_shape=[1, 1, 1],
-                             padding=0,
-                             activation_fn=None,
-                             use_batch_norm=False,
-                             use_bias=True,
-                             name='logits')
+
+        self.logits = nn.Linear(
+            in_features=384+384+128+128,
+            out_features=self._num_classes,
+            bias=True
+        )
 
         self.build()
 
@@ -352,14 +351,19 @@ class InceptionI3d(nn.Module):
                 # use _modules to work with dataparallel
                 x = self._modules[end_point](x)
 
-        x = self.logits(self.dropout(self.avg_pool(x)))
-        if self._spatial_squeeze:
-            logits = x.squeeze(3).squeeze(3)
-        # logits is batch X time X classes, which is what we want to work with
+        x = self.avg_pool(x)
+        x = self.dropout(x)
+
+        # logits' shape => batch x classes
+        x = x.squeeze()
+        logits = self.logits(x)
+
         return logits
 
     def extract_features(self, x):
         for end_point in self.VALID_ENDPOINTS:
             if end_point in self.end_points:
-                x = self._modules[end_point](x)
-        return self.avg_pool(x)
+                feats = self._modules[end_point](x)
+
+        # feature's shape =>(N, C, T, H, W)
+        return feats

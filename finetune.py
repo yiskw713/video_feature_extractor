@@ -19,6 +19,7 @@ from utils.class_weight import get_class_weight
 from utils.dataset import Kinetics
 from utils.mean import get_mean, get_std
 from models import resnet
+from models import i3d
 
 
 def get_arguments():
@@ -241,6 +242,9 @@ def main():
     elif CONFIG.model == 'resnet50':
         print('ResNet50 will be used as a model.')
         model = resnet.generate_model(50, n_classes=CONFIG.n_classes)
+    elif CONFIG.model == 'i3d':
+        print('I3D will be used as a model.')
+        model = i3d.InceptionI3d(n_classes=CONFIG.n_classes, in_channels=3)
     else:
         print('There is no model appropriate to your choice. '
               'Instead, resnet18 will be used as a model.')
@@ -248,8 +252,12 @@ def main():
 
     # load pretrained model
     if CONFIG.pretrained_weights is not None:
-        state_dict = torch.load(CONFIG.pretrained_weights)
-        model.load_state_dict(state_dict)
+        if CONFIG.model == 'i3d':
+            state_dict = torch.load(CONFIG.pretrained_weights)
+            model.load_state_dict(state_dict, strict=False)
+        else:
+            state_dict = torch.load(CONFIG.pretrained_weights)
+            model.load_state_dict(state_dict, strict=False)
 
     # set optimizer, lr_scheduler
     if CONFIG.optimizer == 'Adam':

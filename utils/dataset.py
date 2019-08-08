@@ -40,19 +40,28 @@ def train_video_loader(
         video_path: path for the video.
         input_frames: the number of frames you want to input to the model. (default 16)
         temp_downsamp_rate: temporal downsampling rate (default 2)
-        image_file_format: 'jpg', 'png' or 'hdf5'
+        image_file_format: 'jpg' or 'hdf5'
     """
 
-    if (image_file_format == 'jpg') or (image_file_format == 'png'):
+    if image_file_format == 'jpg':
         # count the number of frames
-        n_frames = len(glob.glob(os.path.join(
-            video_path, '*.{}'.format(image_file_format))))
+        n_frames = len(glob.glob(os.path.join(video_path, '*.jpg')))
         start_frame = np.random.randint(
-            1, n_frames - input_frames * temp_downsamp_rate + 1)
+            1, max(1, n_frames - input_frames * temp_downsamp_rate))
+
+        # loop padding if the number of frames of a video is smaller than input frames
+        indices = [i for i in range(n_frames)]
+        indices = indices[start_frame::temp_downsamp_rate]
+        for i in indices:
+            if len(indices) >= input_frames:
+                break
+            else:
+                indices.append(i)
 
         clip = []
-        for i in range(start_frame, start_frame + input_frames, temp_downsamp_rate):
-            img_path = os.path.join(video_path, 'image_{:05d}.jpg'.format(i))
+        for i in indices:
+            # frame name: image_000001.jpg ~
+            img_path = os.path.join(video_path, 'image_{:05d}.jpg'.format(i+1))
             img = loader(img_path)
             if transform is not None:
                 img = transform(img)
@@ -65,16 +74,26 @@ def train_video_loader(
             video = f['video']
             n_frames = len(video)
             clip = []
-            start_frame = np.random.randint(
-                0, n_frames - input_frames * temp_downsamp_rate)
 
-            for i in range(start_frame, start_frame + input_frames * temp_downsamp_rate, temp_downsamp_rate):
+            start_frame = np.random.randint(
+                0, max(1, n_frames - input_frames * temp_downsamp_rate))
+
+            # loop padding if the number of frames of a video is smaller than input frames
+            indices = [i for i in range(n_frames)]
+            indices = indices[start_frame::temp_downsamp_rate]
+            for i in indices:
+                if len(indices) >= input_frames:
+                    break
+                else:
+                    indices.append(i)
+
+            for i in indices:
                 img = Image.open(io.BytesIO(video[i]))
                 if transform is not None:
                     img = transform(img)
                 clip.append(img)
     else:
-        print('You have to choose "jpg", "png" or "hdf5" as image file format.')
+        print('You have to choose "jpg" or "hdf5" as image file format.')
         sys.exit(1)
     return clip
 
@@ -86,10 +105,10 @@ def feature_extract_loader(
     Args:
         video_path: path for the video.
         temp_downsamp_rate: temporal downsampling rate (default 2)
-        image_file_format: 'jpg', 'png' or 'hdf5'
+        image_file_format: 'jpg' or 'hdf5'
     """
 
-    if (image_file_format == 'jpg') or (image_file_format == 'png'):
+    if image_file_format == 'jpg':
         # count the number of frames
         n_frames = len(glob.glob(os.path.join(
             video_path, '*.{}'.format(image_file_format))))
@@ -116,7 +135,7 @@ def feature_extract_loader(
                     img = transform(img)
                 clip.append(img)
     else:
-        print('You have to choose "jpg", "png" or "hdf5" as image file format.')
+        print('You have to choose "jpg" or "hdf5" as image file format.')
         sys.exit(1)
     return clip
 
@@ -186,10 +205,10 @@ class MSR_VTT(Dataset):
 
         if self.image_file_format == 'hdf5':
             self.video = glob.glob(os.path.join(self.dataset_dir, '*.hdf5'))
-        elif (self.image_file_format == 'jpg') or (self.image_file_format == 'png'):
+        elif self.image_file_format == 'jpg':
             self.video = glob.glob(self.dataset_dir)
         else:
-            print('You have to choose "jpg", "png" or "hdf5" as image file format.')
+            print('You have to choose "jpg" or "hdf5" as image file format.')
             sys.exit(1)
 
         self.transform = transform

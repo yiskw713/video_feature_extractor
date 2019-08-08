@@ -21,7 +21,9 @@ Supported datasets are Kinetics400, Kinetics700, MSR-VTT.
 * (accimage)
 
 ## Pretrained Models
+Supported models are 3DResNet, SlowFastNetwork with non local block, (I3D).
 You can download from [here](https://drive.google.com/drive/folders/1pBp4pkhRP-ucd4mRGiX0omDQ5hbg3c7a?usp=sharing)
+Pretrained I3D is not available yet.
 
 ## Extracting and Save Video Features
 Please run ``` python extract.py [dataset_dir] [save_dir] [arch] [--n_classes] [--num_workers] [--temp_downsamp_rate [--image_file_format]```.

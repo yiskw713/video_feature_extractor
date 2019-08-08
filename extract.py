@@ -1,7 +1,6 @@
 import argparse
 import os
 import torch
-import torch.nn as nn
 import tqdm
 
 from joblib import Parallel, delayed
@@ -10,7 +9,7 @@ from torchvision.transforms import Compose, ToTensor, CenterCrop, Normalize
 
 from utils.dataset import MSR_VTT
 from utils.mean import get_mean, get_std
-from models import resnet
+from models import resnet, i3d
 
 
 def get_arguments():
@@ -26,7 +25,7 @@ def get_arguments():
     parser.add_argument(
         'save_dir', type=str, help='path to the directory you want to save video features')
     parser.add_argument(
-        'arch', type=str, help='model architecture. (resnet50)')
+        'arch', type=str, help='model architecture. (resnet50 | i3d)')
     parser.add_argument(
         'pretrained_weights', type=str, help='path to the pretrained model')
     parser.add_argument(
@@ -60,7 +59,7 @@ def extract(model, loader, save_dir, n_jobs, device):
 
             batch_size = x.shape[0]
 
-            feats = model(x)
+            feats = model.extract_features(x)
             feats = feats.to('cpu')
 
             Parallel(n_jobs=n_jobs)(
@@ -97,6 +96,9 @@ def main():
     if args.arch == 'resnet50':
         print('ResNet50 will be used as a model.')
         model = resnet.generate_model(50, n_classes=args.n_classes)
+    if args.arch == 'i3d':
+        print('I3D will be used as a model.')
+        model = i3d.InceptionI3d(num_classes=args.n_classes)
     else:
         print('There is no model appropriate to your choice. '
               'Instead, resnet50 will be used as a model.')
@@ -105,9 +107,6 @@ def main():
     # load pretrained model
     state_dict = torch.load(args.pretrained_weights)
     model.load_state_dict(state_dict)
-
-    # remove global average pooling layer and fc layer
-    model = nn.Sequential(*list(model.children())[:-2])
 
     # send the model to cuda/cpu
     device = 'cuda' if torch.cuda.is_available() else 'cpu'

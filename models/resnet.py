@@ -3,8 +3,6 @@ Copyright (c) 2017 Kensho Hara
 Released under the MIT license
 https://github.com/kenshohara/3D-ResNets-PyTorch
 """
-
-import math
 from functools import partial
 
 import torch
@@ -205,6 +203,20 @@ class ResNet(nn.Module):
         x = self.fc(x)
 
         return x
+
+    def extract_features(self, x):
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.relu(x)
+        if not self.no_max_pool:
+            x = self.maxpool(x)
+
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        feats = self.layer4(x)
+
+        return feats
 
 
 def generate_model(model_depth, **kwargs):
