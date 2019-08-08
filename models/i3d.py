@@ -363,7 +363,7 @@ class InceptionI3d(nn.Module):
     def extract_features(self, x):
         for end_point in self.VALID_ENDPOINTS:
             if end_point in self.end_points:
-                feats = self._modules[end_point](x)
+                x = self._modules[end_point](x)
 
         # feature's shape =>(N, C, T, H, W)
-        return feats
+        return x
