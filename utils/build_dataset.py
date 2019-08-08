@@ -34,7 +34,7 @@ def get_arguments():
 def main():
     args = get_arguments()
 
-    df = pd.read_csv(args.orig_train_csv)
+    df = pd.read_csv(args.orig_csv)
 
     class_label_map = get_class_label_map(n_classes=args.n_classes)
 
