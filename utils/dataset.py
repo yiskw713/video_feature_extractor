@@ -211,6 +211,11 @@ class MSR_VTT(Dataset):
 
         video_id = os.path.relpath(video_path, self.dataset_dir)
 
+        if self.image_file_format == 'hdf5':
+            video_id = video_id[:-5]
+        else:
+            video_id = video_id[:-4]
+
         sample = {
             'clip': clip,
             'video_id': video_id,
