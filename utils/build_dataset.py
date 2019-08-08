@@ -60,15 +60,18 @@ def main():
     if 'is_cc' in df.columns:
         del df['is_cc']
 
-    df['exists'] = 0
+    exists = []
 
     for i in range(len(df)):
         video_dir = os.path.join(args.dataset_dir, df.iloc[i]['video'])
         if os.path.exists(video_dir):
-            df.iloc[i]['exists'] = 1
+            exists.append(1)
         elif os.path.exists(video_dir + '.hdf5'):
-            df.iloc[i]['exists'] = 1
+            exists.append(1)
+        else:
+            exists.append(0)
 
+    df['exists'] = exists
     df = df[df['exists'] == 1]
 
     df.to_csv(
