@@ -82,10 +82,12 @@ def train_video_loader(
             indices = [i for i in range(n_frames)]
             indices = indices[start_frame::temp_downsamp_rate]
             for i in indices:
-                if len(indices) >= input_frames:
+                if len(indices) == input_frames:
                     break
-                else:
-                    indices.append(i)
+                elif len(indices) > input_frames:
+                    indices = indices[:input_frames]
+                    break
+                indices.append(i)
 
             for i in indices:
                 img = Image.open(io.BytesIO(video[i]))
@@ -166,12 +168,12 @@ class Kinetics(Dataset):
         video_path = os.path.join(
             self.config.dataset_dir, self.df.iloc[idx]['video'])
         cls_id = torch.tensor(int(self.df.iloc[idx]['class_id'])).long()
-
         if self.mode == 'extraction':
             clip = feature_extract_loader(
                 self.loader, video_path, self.transform,
                 self.config.temp_downsamp_rate, self.config.image_file_format
             )
+            clip = torch.stack(clip, 0).permute(1, 0, 2, 3)
             return clip
         else:
             clip = train_video_loader(
@@ -182,7 +184,6 @@ class Kinetics(Dataset):
 
             # clip.shape => (C, T, H, W)
             clip = torch.stack(clip, 0).permute(1, 0, 2, 3)
-
             sample = {
                 'clip': clip,
                 'cls_id': cls_id,

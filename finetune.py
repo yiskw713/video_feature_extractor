@@ -83,18 +83,20 @@ class AverageMeter(object):
 
 
 def accuracy(output, target, topk=(1,)):
-    """Computes the accuracy over the k top predictions"""
-    N = output.shape[0]
-    maxk = max(topk)
-    _, pred = output.topk(maxk, 1, True, True)
-    pred = pred.t()
-    correct = pred.eq(target.view(1, -1).expand_as(pred))
+    """Computes the accuracy over the k top predictions for the specified values of k"""
+    with torch.no_grad():
+        maxk = max(topk)
+        batch_size = target.size(0)
 
-    res = []
-    for k in topk:
-        correct_k = correct[:k].view(-1).float().sum(0, keepdim=True)
-        res.append(correct_k)
-    return N, res
+        _, pred = output.topk(maxk, 1, True, True)
+        pred = pred.t()
+        correct = pred.eq(target.view(1, -1).expand_as(pred))
+
+        res = []
+        for k in topk:
+            correct_k = correct[:k].view(-1).float().sum(0, keepdim=True)
+            res.append(correct_k.mul_(100.0 / batch_size))
+        return res
 
 
 def train(train_loader, model, criterion, optimizer, epoch, config, device):
@@ -249,7 +251,7 @@ def main():
         model = resnet.generate_model(50, n_classes=CONFIG.n_classes)
     elif CONFIG.model == 'i3d':
         print('I3D will be used as a model.')
-        model = i3d.InceptionI3d(n_classes=CONFIG.n_classes, in_channels=3)
+        model = i3d.InceptionI3d(num_classes=CONFIG.n_classes, in_channels=3)
     else:
         print('There is no model appropriate to your choice. '
               'Instead, resnet18 will be used as a model.')

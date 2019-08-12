@@ -4,7 +4,7 @@ class_weight: True    # if you use class weight to calculate cross entropy or no
 writer_flag: True      # if you use tensorboardx or not
 
 n_classes: 700
-batch_size: 64
+batch_size: 16
 input_frames: 64
 height: 224
 width: 224
