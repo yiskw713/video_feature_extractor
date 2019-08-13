@@ -143,8 +143,8 @@ def train(train_loader, model, criterion, optimizer, epoch, config, device):
         batch_time.update(time.time() - end)
         end = time.time()
 
-        # show progress bar per 1000 iteration
-        if i % 1000 == 0:
+        # show progress bar per 5000 iteration
+        if i % 5000 == 0:
             progress.display(i)
 
     return losses.avg, top1.avg, top5.avg
@@ -185,8 +185,8 @@ def validate(val_loader, model, criterion, config, device):
             batch_time.update(time.time() - end)
             end = time.time()
 
-            # show progress bar per 1000 iteration
-            if i % 1000 == 0:
+            # show progress bar per 5000 iteration
+            if i % 5000 == 0:
                 progress.display(i)
 
     return losses.avg, top1.avg, top5.avg
@@ -420,7 +420,7 @@ def main():
         # write logs to dataframe and csv file
         tmp = pd.Series([
             epoch,
-            scheduler.get_lr()[0],
+            optimizer.param_groups[0]['lr'],
             train_losses[-1],
             val_losses[-1],
             train_top1_accuracy[-1],

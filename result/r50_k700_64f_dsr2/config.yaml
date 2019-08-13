@@ -9,8 +9,8 @@ input_frames: 64
 height: 224
 width: 224
 temp_downsamp_rate: 2   # tempora donw sampling rate
-num_workers: 32
-max_epoch: 50
+num_workers: 40
+max_epoch: 100
 
 optimizer: SGD
 learning_rate: 0.0003
