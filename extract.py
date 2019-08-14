@@ -3,9 +3,8 @@ import os
 import torch
 import tqdm
 
-from joblib import Parallel, delayed
 from torch.utils.data import DataLoader
-from torchvision.transforms import Compose, ToTensor, CenterCrop, Normalize
+from torchvision.transforms import Compose, ToTensor, Normalize
 
 from utils.dataset import MSR_VTT
 from utils.mean import get_mean, get_std
@@ -33,13 +32,9 @@ def get_arguments():
     parser.add_argument(
         '--num_workers', type=int, default=4, help='the number of workes for data loding')
     parser.add_argument(
-        '--batch_size', type=int, default=64, help='batch size')
-    parser.add_argument(
-        '--temp_downsamp_rate', type=int, default=2, help='temporal downsampling rate (default: 2)')
+        '--temp_downsamp_rate', type=int, default=1, help='temporal downsampling rate (default: 2)')
     parser.add_argument(
         '--image_file_format', type=str, default='hdf5', help=' jpg | png | hdf5 ')
-    parser.add_argument(
-        '--n_jobs', type=int, default=-1, help='the number of cores which save feats')
 
     return parser.parse_args()
 
@@ -49,7 +44,7 @@ def save_feats(feats, video_id, save_dir):
     torch.save(feats, os.path.join(save_dir, video_id + '.pth'))
 
 
-def extract(model, loader, save_dir, n_jobs, device):
+def extract(model, loader, save_dir, device):
     model.eval()
 
     for sample in tqdm.tqdm(loader, total=len(loader)):
@@ -57,13 +52,10 @@ def extract(model, loader, save_dir, n_jobs, device):
             x = sample['clip'].to(device)
             video_id = sample['video_id']
 
-            batch_size = x.shape[0]
-
             feats = model.extract_features(x)
             feats = feats.to('cpu')
 
-            Parallel(n_jobs=n_jobs)(
-                [delayed(save_feats)(feats[i], video_id[i], save_dir) for i in range(batch_size)])
+            save_feats(feats[0], video_id[0], save_dir)
 
 
 def main():
@@ -77,7 +69,6 @@ def main():
         args.temp_downsamp_rate,
         args.image_file_format,
         transform=Compose([
-            CenterCrop((224, 224)),
             ToTensor(),
             normalize,
         ])
@@ -118,7 +109,7 @@ def main():
     # extract and save features
     print('\n------------------------Start extracting features------------------------\n')
 
-    extract(model, loader, args.save_dir, args.n_jobs, device)
+    extract(model, loader, args.save_dir, device)
 
     print("Done!")
 
