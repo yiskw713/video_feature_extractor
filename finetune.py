@@ -213,7 +213,8 @@ def main():
             RandomCrop((CONFIG.height, CONFIG.width)),
             ToTensor(),
             normalize,
-        ])
+        ]),
+        mode='training'
     )
 
     val_data = Kinetics(
@@ -223,6 +224,7 @@ def main():
             ToTensor(),
             normalize,
         ]),
+        mode='validation'
     )
 
     train_loader = DataLoader(

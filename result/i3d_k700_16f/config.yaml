@@ -26,4 +26,4 @@ dataset_dir: /groups1/gaa50131/datasets/kinetics/videos_700_hdf5
 train_csv: ./dataset/kinetics_700_train.csv
 val_csv: ./dataset/kinetics_700_val.csv
 pretrained_weights: ./weights/i3d_rgb_imagenet.pth
-result_path: ./result/i3d_k700_64f
+result_path: ./result/i3d_k700_16f
