@@ -143,8 +143,8 @@ def train(train_loader, model, criterion, optimizer, epoch, config, device):
         batch_time.update(time.time() - end)
         end = time.time()
 
-        # show progress bar per 5000 iteration
-        if i % 5000 == 0:
+        # show progress bar per 1000 iteration
+        if i % 1000 == 0:
             progress.display(i)
 
     return losses.avg, top1.avg, top5.avg
@@ -185,8 +185,8 @@ def validate(val_loader, model, criterion, config, device):
             batch_time.update(time.time() - end)
             end = time.time()
 
-            # show progress bar per 5000 iteration
-            if i % 5000 == 0:
+            # show progress bar per 1000 iteration
+            if i % 1000 == 0:
                 progress.display(i)
 
     return losses.avg, top1.avg, top5.avg
@@ -434,7 +434,7 @@ def main():
 
         print(
             'epoch: {}\tlr: {}\tloss train: {:.4f}\tloss val: {:.4f}\tval_acc1: {:.5f}\tval_acc5: {:.4f}'
-            .format(epoch, scheduler.get_lr()[0], train_losses[-1],
+            .format(epoch, optimizer.param_groups[0]['lr'], train_losses[-1],
                     val_losses[-1], val_top1_accuracy[-1], val_top5_accuracy[-1])
         )
 
