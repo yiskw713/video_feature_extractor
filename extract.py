@@ -103,7 +103,6 @@ def main():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     model.to(device)
     if device == 'cuda':
-        model = torch.nn.DataParallel(model)  # make parallel
         torch.backends.cudnn.benchmark = True
 
     # extract and save features
