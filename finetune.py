@@ -147,7 +147,7 @@ def train(train_loader, model, criterion, optimizer, epoch, config, device):
         if i % 1000 == 0:
             progress.display(i)
 
-    return losses.avg, top1.avg, top5.avg
+    return losses.avg.to('cpu'), top1.avg.to('cpu'), top5.avg.to('cpu')
 
 
 def validate(val_loader, model, criterion, config, device):
@@ -189,7 +189,7 @@ def validate(val_loader, model, criterion, config, device):
             if i % 1000 == 0:
                 progress.display(i)
 
-    return losses.avg, top1.avg, top5.avg
+    return losses.avg.to('cpu'), top1.avg.to('cpu'), top5.avg.to('cpu')
 
 
 def main():
