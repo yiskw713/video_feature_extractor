@@ -310,16 +310,6 @@ def main():
     else:
         scheduler = None
 
-    # send the model to cuda/cpu
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    model.to(device)
-    if device == 'cuda':
-        model = torch.nn.DataParallel(model)  # make parallel
-        torch.backends.cudnn.benchmark = True
-    else:
-        print('You have to use GPUs because training 3DCNN is computationally expensive.')
-        sys.exit(1)
-
     # resume if you want
     begin_epoch = 0
     best_acc1 = 0
@@ -342,6 +332,16 @@ def main():
                 columns=['epoch', 'lr', 'train_loss', 'val_loss', 'train_acc@1',
                          'train_acc@5', 'val_acc@1', 'val_acc@5']
             )
+
+    # send the model to cuda/cpu
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    model.to(device)
+    if device == 'cuda':
+        model = torch.nn.DataParallel(model)  # make parallel
+        torch.backends.cudnn.benchmark = True
+    else:
+        print('You have to use GPUs because training 3DCNN is computationally expensive.')
+        sys.exit(1)
 
     # criterion for loss
     if CONFIG.class_weight:
