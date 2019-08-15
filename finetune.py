@@ -259,6 +259,15 @@ def main():
               'Instead, resnet18 will be used as a model.')
         model = resnet.generate_model(18, n_classes=CONFIG.n_classes)
 
+    # send the model to cuda/cpu
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    model.to(device)
+    if device == 'cuda':
+        torch.backends.cudnn.benchmark = True
+    else:
+        print('You have to use GPUs because training 3DCNN is computationally expensive.')
+        sys.exit(1)
+
     # load pretrained model
     if CONFIG.pretrained_weights is not None:
         if CONFIG.model == 'i3d':
@@ -333,15 +342,8 @@ def main():
                          'train_acc@5', 'val_acc@1', 'val_acc@5']
             )
 
-    # send the model to cuda/cpu
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    model.to(device)
-    if device == 'cuda':
-        model = torch.nn.DataParallel(model)  # make parallel
-        torch.backends.cudnn.benchmark = True
-    else:
-        print('You have to use GPUs because training 3DCNN is computationally expensive.')
-        sys.exit(1)
+    # make parallel
+    model = torch.nn.DataParallel(model)
 
     # criterion for loss
     if CONFIG.class_weight:
