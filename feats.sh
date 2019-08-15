@@ -21,14 +21,14 @@ eval "$(pyenv virtualenv-init -)"
 pyenv global torch
 cd /home/aab10820pu/video_feature_extractor
 
-nohup env CUDA_VISIBLE_DEVICES=0 python extract.py /groups1/gaa50131/datasets/MSR-VTT/TrainValVideo \
-/groups1/gaa50131/datasets/MSR-VTT/features/r50_k700_16f resnet50 ./weights/resnet50_kinetics700.pth &> ./nohup0.out &
+# python extract.py /groups1/gaa50131/datasets/MSR-VTT/TrainValHdf5 \
+# /groups1/gaa50131/datasets/MSR-VTT/features/r50_k700_16f resnet50 ./weights/resnet50_kinetics700.pth 
 
-nohup env CUDA_VISIBLE_DEVICES=1 python extract.py /groups1/gaa50131/datasets/MSR-VTT/TestHdf5 \
-/groups1/gaa50131/datasets/MSR-VTT/features/r50_k700_16f resnet50 ./weights/resnet50_kinetics700.pth &> ./nohup1.out &
+# python extract.py /groups1/gaa50131/datasets/MSR-VTT/TestHdf5 \
+# /groups1/gaa50131/datasets/MSR-VTT/features/r50_k700_16f resnet50 ./weights/resnet50_kinetics700.pth
 
-nohup env CUDA_VISIBLE_DEVICES=2 python extract_ms.py /groups1/gaa50131/datasets/MSR-VTT/TrainValVideo \
-/groups1/gaa50131/datasets/MSR-VTT/features/sfnl152_k700_16f slowfast152_nl slowfast152_nl ./weights/slowfast152_nl_kinetics700.pth &> ./nohup2.out &
+python extract_ms.py /groups1/gaa50131/datasets/MSR-VTT/TrainValHdf5 \
+/groups1/gaa50131/datasets/MSR-VTT/features/sfnl152_k700_16f slowfast152_nl ./weights/slowfast152_nl_kinetics700.pth
 
-nohup env CUDA_VISIBLE_DEVICES=3 python extract_ms.py /groups1/gaa50131/datasets/MSR-VTT/TestHdf5 \
-/groups1/gaa50131/datasets/MSR-VTT/features/sfnl152_k700_16f slowfast152_nl ./weights/slowfast152_nl_kinetics700.pth &> ./nohup3.out &
+# python extract_ms.py /groups1/gaa50131/datasets/MSR-VTT/TestHdf5 \
+# /groups1/gaa50131/datasets/MSR-VTT/features/sfnl152_k700_16f slowfast152_nl ./weights/slowfast152_nl_kinetics700.pth

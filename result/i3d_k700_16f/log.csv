@@ -1,0 +1,4 @@
+epoch,lr,train_loss,val_loss,train_acc@1,train_acc@5,val_acc@1,val_acc@5
+0,0.0003,6.529116367541334,6.480588388821598,"tensor(0.3901, device='cuda:0')","tensor(1.5391, device='cuda:0')","tensor(1.5966, device='cuda:0')","tensor(4.5203, device='cuda:0')"
+1,0.0003,6.418722743197426,6.337495811473446,"tensor(1.9353, device='cuda:0')","tensor(5.6161, device='cuda:0')","tensor(4.4888, device='cuda:0')","tensor(11.3853, device='cuda:0')"
+2,0.0003,6.223424993367674,6.093199252972931,"tensor(4.7280, device='cuda:0')","tensor(12.2571, device='cuda:0')","tensor(7.2835, device='cuda:0')","tensor(18.2188, device='cuda:0')"

@@ -1,0 +1,2 @@
+epoch,lr,train_loss,val_loss,train_acc@1,train_acc@5,val_acc@1,val_acc@5
+0,0.0003,5.213261206942445,4.557807135338337,"tensor(8.7395, device='cuda:0')","tensor(21.9170, device='cuda:0')","tensor(16.9547, device='cuda:0')","tensor(37.7562, device='cuda:0')"

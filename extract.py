@@ -32,7 +32,7 @@ def get_arguments():
     parser.add_argument(
         '--num_workers', type=int, default=4, help='the number of workes for data loding')
     parser.add_argument(
-        '--temp_downsamp_rate', type=int, default=1, help='temporal downsampling rate (default: 2)')
+        '--temp_downsamp_rate', type=int, default=2, help='temporal downsampling rate (default: 2)')
     parser.add_argument(
         '--image_file_format', type=str, default='hdf5', help=' jpg | png | hdf5 ')
 
