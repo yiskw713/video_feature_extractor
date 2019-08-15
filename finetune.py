@@ -386,8 +386,8 @@ def main():
 
         # save a model if top1 acc is higher than ever
         # save base models, NOT DataParalled models
-        if best_acc1 < val_acc1:
-            best_acc1 = val_acc1
+        if best_acc1 < val_top1_accuracy[-1]:
+            best_acc1 = val_top1_accuracy[-1]
             torch.save(
                 model.module.state_dict(),
                 os.path.join(CONFIG.result_path, 'best_acc1_model.prm')
