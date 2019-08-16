@@ -131,8 +131,8 @@ def train(train_loader, model, criterion, optimizer, epoch, config, device):
         # measure accuracy and record loss
         acc1, acc5 = accuracy(output, t, topk=(1, 5))
         losses.update(loss.item(), x.size(0))
-        top1.update(acc1[0], x.size(0))
-        top5.update(acc5[0], x.size(0))
+        top1.update(acc1[0].item(), x.size(0))
+        top5.update(acc5[0].item(), x.size(0))
 
         # compute gradient and do SGD step
         optimizer.zero_grad()
@@ -178,8 +178,8 @@ def validate(val_loader, model, criterion, config, device):
             # measure accuracy and record loss
             acc1, acc5 = accuracy(output, t, topk=(1, 5))
             losses.update(loss.item(), x.size(0))
-            top1.update(acc1[0], x.size(0))
-            top5.update(acc5[0], x.size(0))
+            top1.update(acc1[0].item(), x.size(0))
+            top5.update(acc5[0].item(), x.size(0))
 
             # measure elapsed time
             batch_time.update(time.time() - end)
@@ -392,7 +392,7 @@ def main():
                 model.module.state_dict(),
                 os.path.join(CONFIG.result_path, 'best_acc1_model.prm')
             )
-
+        
         # save checkpoint every epoch
         save_checkpoint(
             CONFIG, epoch, model.module, optimizer, best_acc1, scheduler)
