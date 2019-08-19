@@ -147,7 +147,7 @@ def train(train_loader, model, criterion, optimizer, epoch, config, device):
         if i % 1000 == 0:
             progress.display(i)
 
-    return losses, top1.avg, top5.avg
+    return losses.avg, top1.avg, top5.avg
 
 
 def validate(val_loader, model, criterion, config, device):
@@ -405,7 +405,7 @@ def main():
                 os.path.join(
                     CONFIG.result_path, 'epoch_{}_model.prm'.format(epoch))
             )
-
+        
         # tensorboardx
         if writer is not None:
             writer.add_scalars("loss", {
