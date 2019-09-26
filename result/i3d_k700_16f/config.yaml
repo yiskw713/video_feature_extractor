@@ -10,10 +10,10 @@ height: 224
 width: 224
 temp_downsamp_rate: 1   # tempora donw sampling rate
 num_workers: 32
-max_epoch: 150
+max_epoch: 300
 
 optimizer: SGD
-learning_rate: 0.0003
+learning_rate: 0.0005
 lr_patience: 10       # Patience of LR scheduler
 momentum: 0.9         # momentum of SGD
 dampening: 0.0        # dampening for momentum of SGD
