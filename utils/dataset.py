@@ -152,7 +152,7 @@ class Kinetics(Dataset):
 
         self.config = config
 
-        if mode == 'validation':
+        if mode == 'validation' or 'extraction':
             self.df = pd.read_csv(self.config.val_csv)
         else:
             self.df = pd.read_csv(self.config.train_csv)
@@ -167,6 +167,10 @@ class Kinetics(Dataset):
     def __getitem__(self, idx):
         video_path = os.path.join(
             self.config.dataset_dir, self.df.iloc[idx]['video'])
+        label = self.df.iloc[idx]['label']
+
+        video_id = os.path.basename(video_path)
+
         cls_id = torch.tensor(int(self.df.iloc[idx]['class_id'])).long()
         if self.mode == 'extraction':
             clip = feature_extract_loader(
@@ -174,7 +178,6 @@ class Kinetics(Dataset):
                 self.config.temp_downsamp_rate, self.config.image_file_format
             )
             clip = torch.stack(clip, 0).permute(1, 0, 2, 3)
-            return clip
         else:
             clip = train_video_loader(
                 self.loader, video_path, self.config.input_frames,
@@ -184,12 +187,15 @@ class Kinetics(Dataset):
 
             # clip.shape => (C, T, H, W)
             clip = torch.stack(clip, 0).permute(1, 0, 2, 3)
-            sample = {
-                'clip': clip,
-                'cls_id': cls_id,
-            }
 
-            return sample
+        sample = {
+            'video_id': video_id,
+            'clip': clip,
+            'cls_id': cls_id,
+            'label': label
+        }
+
+        return sample
 
 
 class MSR_VTT(Dataset):
