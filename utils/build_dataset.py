@@ -1,8 +1,10 @@
 import argparse
+import h5py
+import glob
 import os
 import pandas as pd
 
-from class_label_map import get_class_label_map
+from joblib import delayed, Parallel
 
 
 def get_arguments():
@@ -12,67 +14,78 @@ def get_arguments():
     """
 
     parser = argparse.ArgumentParser(
-        description='make csv files for training and validation')
+        description='make csv files')
     parser.add_argument(
-        'dataset_dir', type=str, help='path of the dataset directory')
+        'dataset', type=str, help='dataset name. [msrvtt, activitynet]')
     parser.add_argument(
-        'n_classes', type=int, help='the number of classes in kinetics dataset')
+        'dataset_dir', type=str, help='path to the dataset directory')
     parser.add_argument(
-        'orig_csv', type=str, help='path to the original kinetics dataset csv')
+        '--split', type=str, default=None,
+        help='if a dataset is divided into some splits, specify the split for which you want make csv files'
+    )
     parser.add_argument(
-        'split', type=str, help='train | val | test ')
+        '--file_format', type=str, default='hdf5', help='the video file format. [\'hdf5\', \'jpg\' or \'png\']')
     parser.add_argument(
-        '--save_path', type=str, default='./dataset', help='path where you want to save csv files')
+        '--n_jobs', type=int, default=-1, help='the number of cores to load data')
+    parser.add_argument(
+        '--save_path', type=str, default='./csv', help='path where you want to save csv files')
 
     return parser.parse_args()
+
+
+def check_n_frames(idx, video_path, dataset_dir, file_format):
+    # idx is for sorting list in the same order as path
+    if file_format == 'hdf5':
+        path = os.path.join(dataset_dir, video_path)
+
+        with h5py.File(path, 'r') as f:
+            video_data = f['video']
+            n_frames = len(video_data)
+    else:
+        imgs = glob.glob(os.path.join(
+            dataset_dir, video_path, '*.{}'.format(file_format)))
+        n_frames = len(imgs)
+
+    return idx, n_frames
 
 
 def main():
     args = get_arguments()
 
-    df = pd.read_csv(args.orig_csv)
+    if args.file_format == 'hdf5':
+        paths = glob.glob(os.path.join(args.dataset_dir, '*.hdf5'))
+    else:
+        paths = glob.glob(os.path.join(args.dataset_dir, '*'))
 
-    class_label_map = get_class_label_map(n_classes=args.n_classes)
+    n_frames = Parallel(n_jobs=args.n_jobs)([
+        delayed(check_n_frames)(
+            i, paths[i], args.dataset_dir, args.file_format)
+        for i in range(len(paths))
+    ])
 
-    path = []
-    cls_id = []
-    exists = []
+    n_frames.sort(key=lambda x: x[0])
+    n_frames = [x[1] for x in n_frames]
 
-    for i in range(len(df)):
-        path.append(
-            df.iloc[i]['label'] + '/' + df.iloc[i]['youtube_id'] + '_'
-            + str(df.iloc[i]['time_start']).zfill(6) + '_'
-            + str(df.iloc[i]['time_end']).zfill(6)
-        )
-        cls_id.append(class_label_map[df.iloc[i]['label']])
+    df = pd.DataFrame({
+        "video": paths,
+        "n_frames": n_frames
+    })
 
-        video_dir = os.path.join(args.dataset_dir, df.iloc[i]['video'])
-        if os.path.exists(video_dir):
-            exists.append(1)
-        elif os.path.exists(video_dir + '.hdf5'):
-            exists.append(1)
-        else:
-            exists.append(0)
+    # remove videos where the number of frames is smaller than 16
+    df = df[df['n_frames'] >= 16]
 
-    df['class_id'] = cls_id
-    df['video'] = path
-    df['exists'] = exists
-    df = df[df['exists'] == 1]
-
-    # delete useless columns
-    del df['youtube_id']
-    del df['time_start']
-    del df['time_end']
-    del df['split']
-    del df['exists']
-    if 'is_cc' in df.columns:
-        del df['is_cc']
-
-    df.to_csv(
-        os.path.join(
-            args.save_path,
-            'kinetics_{}_{}.csv'.format(args.n_classes, args.split)
-        ), index=None)
+    if args.split is not None:
+        df.to_csv(
+            os.path.join(
+                args.save_path,
+                '{}_{}.csv'.format(args.dataset, args.split)
+            ), index=None)
+    else:
+        df.to_csv(
+            os.path.join(
+                args.save_path,
+                '{}.csv'.format(args.dataset)
+            ), index=None)
 
     print('Done!')
 
