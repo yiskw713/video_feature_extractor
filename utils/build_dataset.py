@@ -16,7 +16,7 @@ def get_arguments():
     parser = argparse.ArgumentParser(
         description='make csv files')
     parser.add_argument(
-        'dataset', type=str, help='dataset name. [msrvtt, activitynet]')
+        'dataset', type=str, help='dataset name. [msr-vtt, activitynet]')
     parser.add_argument(
         'dataset_dir', type=str, help='path to the dataset directory')
     parser.add_argument(
@@ -57,6 +57,8 @@ def main():
     else:
         paths = glob.glob(os.path.join(args.dataset_dir, '*'))
 
+    paths = [os.path.relpath(path, args.dataset_dir) for path in paths]
+
     n_frames = Parallel(n_jobs=args.n_jobs)([
         delayed(check_n_frames)(
             i, paths[i], args.dataset_dir, args.file_format)
@@ -73,6 +75,9 @@ def main():
 
     # remove videos where the number of frames is smaller than 16
     df = df[df['n_frames'] >= 16]
+
+    if not os.path.exists(args.save_path):
+        os.makedirs(args.save_path)
 
     if args.split is not None:
         df.to_csv(

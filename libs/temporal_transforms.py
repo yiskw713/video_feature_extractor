@@ -45,6 +45,26 @@ class LoopPadding(object):
         return out
 
 
+class NonePadding(object):
+    """
+        None in frame_indices means noise padding.
+        See dataset.py
+    """
+
+    def __init__(self, size):
+        self.size = size
+
+    def __call__(self, frame_indices):
+        out = frame_indices
+
+        for index in out:
+            if len(out) >= self.size:
+                break
+            out.append(None)
+
+        return out
+
+
 class TemporalBeginCrop(object):
 
     def __init__(self, size):

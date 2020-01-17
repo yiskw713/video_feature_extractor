@@ -117,6 +117,9 @@ def main():
     else:
         split = 'test'
 
+    if not os.path.exists(args.save_path):
+        os.makedirs(args.save_path)
+
     df.to_csv(
         os.path.join(
             args.save_path,

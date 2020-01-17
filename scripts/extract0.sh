@@ -1,11 +1,11 @@
 #!/bin/bash
 
-#$ -l rt_F=1
+#$ -l rt_G.small=1
 #$ -l h_rt=72:00:00
 #$ -j y
 #$ -cwd
 #$ -m abe
-#$ -N r18
+#$ -N feats
 
 source /etc/profile.d/modules.sh
 module purge
@@ -19,6 +19,4 @@ eval "$(pyenv init -)"
 eval "$(pyenv virtualenv-init -)"
 
 pyenv global torch
-cd /home/aab10820pu/anet2020_recog
-
-python train.py ./result/k400/r18/config.yaml --resume
+cd /home/aab10820pu/video_feature_extractor

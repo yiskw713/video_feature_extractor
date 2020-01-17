@@ -1,13 +1,16 @@
 import glob
 import h5py
 import io
-import torch
-import pandas as pd
+import numpy as np
 import os
+import pandas as pd
 import sys
+import torch
 
 from PIL import Image
 from torch.utils.data import Dataset
+
+from .mean_std import get_mean, get_std
 
 
 class ImageLoader(object):
@@ -19,6 +22,8 @@ class ImageLoader(object):
     def __init__(self, temporal_transform=None):
         super().__init__()
         self.temporal_transform = temporal_transform
+        self.mean = get_mean(norm_value=1)
+        self.std = get_std(norm_value=1)
 
     def __call__(self, video_path):
         img_paths = []
@@ -33,7 +38,14 @@ class ImageLoader(object):
 
         video = []
         for i in frame_indices:
-            video.append(Image.open(img_paths[i]))
+            if i is not None:
+                video.append(Image.open(img_paths[i]))
+            else:
+                # if index is None, insert noise instead of original frames
+                w, h = video[0].size
+                noise = np.random.normal(
+                    self.mean, self.std, size=(h, w, 3)).astype(np.uint8)
+                video.append(Image.fromarray(noise))
 
         return video
 
@@ -48,6 +60,8 @@ class HDF5Loader(object):
     def __init__(self, temporal_transform=None):
         super().__init__()
         self.temporal_transform = temporal_transform
+        self.mean = get_mean(norm_value=1)
+        self.std = get_std(norm_value=1)
 
     def __call__(self, video_path):
         with h5py.File(video_path, 'r') as f:
@@ -58,7 +72,14 @@ class HDF5Loader(object):
 
             video = []
             for i in frame_indices:
-                video.append(Image.open(io.BytesIO(video_data[i])))
+                if i is not None:
+                    video.append(Image.open(io.BytesIO(video_data[i])))
+                else:
+                    # if index is None, insert noise instead of original frames
+                    w, h = video[0].size
+                    noise = np.random.normal(
+                        self.mean, self.std, size=(h, w, 3)).astype(np.uint8)
+                    video.append(Image.fromarray(noise))
 
         return video
 
@@ -91,18 +112,9 @@ class VideoDataset(Dataset):
         return len(self.df)
 
     def __getitem__(self, idx):
-        name = self.df.iloc[idx]['video']
-        video_path = os.path.join(self.dataset_dir, name)
-
-        if 'cls_id' in self.df.columns:
-            cls_id = torch.tensor(int(self.df.iloc[idx]['cls_id'])).long()
-        else:
-            cls_id = None
-
-        if 'label' in self.df.columns:
-            label = self.df.iloc[idx]['label']
-        else:
-            label = None
+        path = self.df.iloc[idx]['video']
+        name = os.path.splitext(path)[0]
+        video_path = os.path.join(self.dataset_dir, path)
 
         clip = self.loader(video_path)
 
@@ -114,9 +126,7 @@ class VideoDataset(Dataset):
 
         sample = {
             'clip': clip,
-            'cls_id': cls_id,
             'name': name,
-            'label': label,
         }
 
         return sample
