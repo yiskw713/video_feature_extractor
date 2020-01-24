@@ -74,7 +74,7 @@ def main():
     })
 
     # remove videos where the number of frames is smaller than 16
-    df = df[df['n_frames'] >= 16]
+    # df = df[df['n_frames'] >= 16]
 
     if not os.path.exists(args.save_path):
         os.makedirs(args.save_path)

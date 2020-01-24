@@ -45,7 +45,7 @@ def get_arguments():
     parser.add_argument(
         '--n_classes', type=int, default=700, help='the number of output classes of the pretrained model')
     parser.add_argument(
-        '--num_workers', type=int, default=8, help='the number of workes for data loding')
+        '--num_workers', type=int, default=2, help='the number of workes for data loding')
     parser.add_argument(
         '--temp_downsamp_rate', type=int, default=1, help='temporal downsampling rate (default: 1)')
     parser.add_argument(
@@ -94,7 +94,7 @@ def sliding_window_extract(model, loader, save_dir, window_size, device):
 
             feats = []
             for i in range(t):
-                x = clip[:, :, i:i+16].to(device)
+                x = clip[:, :, i:i+window_size].clone().detach().to(device)
                 feat = model.extract_features(x)
 
                 # if features are extracted by slowfast

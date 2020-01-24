@@ -5,7 +5,7 @@
 #$ -j y
 #$ -cwd
 #$ -m abe
-#$ -N feats
+#$ -N sfnl
 
 source /etc/profile.d/modules.sh
 module purge
@@ -22,5 +22,5 @@ pyenv global torch
 cd /home/aab10820pu/video_feature_extractor
 
 python extract.py /groups1/gaa50131/datasets/ActivityNet/hdf5 \
-/groups1/gaa50131/datasets/ActivityNet/features/r50_k700 \
-./csv/activitynet_0.csv resnet50 ./weights/resnet50_kinetics700.pth --sliding_window
+/groups1/gaa50131/datasets/ActivityNet/features/sf152nl_k700 \
+./csv/activitynet_8.csv slowfast_nl ./weights/slowfast152_nl_kinetics700.pth --sliding_window

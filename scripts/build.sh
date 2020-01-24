@@ -1,11 +1,11 @@
 #!/bin/bash
 
-#$ -l rt_G.small=1
+#$ -l rt_C.large=1
 #$ -l h_rt=72:00:00
 #$ -j y
 #$ -cwd
 #$ -m abe
-#$ -N feats
+#$ -N build
 
 source /etc/profile.d/modules.sh
 module purge
@@ -21,6 +21,4 @@ eval "$(pyenv virtualenv-init -)"
 pyenv global torch
 cd /home/aab10820pu/video_feature_extractor
 
-python extract.py /groups1/gaa50131/datasets/ActivityNet/hdf5 \
-/groups1/gaa50131/datasets/ActivityNet/features/r50_k700 \
-./csv/activitynet_0.csv resnet50 ./weights/resnet50_kinetics700.pth --sliding_window
+python utils/build_dataset.py activitynet /groups1/gaa50131/datasets/ActivityNet/hdf5

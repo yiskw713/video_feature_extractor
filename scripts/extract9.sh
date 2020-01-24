@@ -23,4 +23,4 @@ cd /home/aab10820pu/video_feature_extractor
 
 python extract.py /groups1/gaa50131/datasets/ActivityNet/hdf5 \
 /groups1/gaa50131/datasets/ActivityNet/features/r50_k700 \
-./csv/activitynet_0.csv resnet50 ./weights/resnet50_kinetics700.pth --sliding_window
+./csv/activitynet_9.csv resnet50 ./weights/resnet50_kinetics700.pth --sliding_window
