@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#$ -l rt_G.small=1
+#$ -l rt_G.large=1
 #$ -l h_rt=72:00:00
 #$ -j y
 #$ -cwd
@@ -22,5 +22,5 @@ pyenv global torch
 cd /home/aab10820pu/video_feature_extractor
 
 python extract.py /groups1/gaa50131/datasets/ActivityNet/hdf5 \
-/groups1/gaa50131/datasets/ActivityNet/features/r50_k700 \
-./csv/activitynet_7.csv resnet50 ./weights/resnet50_kinetics700.pth --sliding_window
+/groups1/gaa50131/datasets/ActivityNet/features/sf152nl_k700 \
+./csv/rest_7.csv slowfast_nl ./weights/slowfast152_nl_kinetics700.pth --sliding_window

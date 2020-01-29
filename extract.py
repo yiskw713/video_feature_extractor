@@ -45,7 +45,7 @@ def get_arguments():
     parser.add_argument(
         '--n_classes', type=int, default=700, help='the number of output classes of the pretrained model')
     parser.add_argument(
-        '--num_workers', type=int, default=2, help='the number of workes for data loding')
+        '--num_workers', type=int, default=0, help='the number of workes for data loding')
     parser.add_argument(
         '--temp_downsamp_rate', type=int, default=1, help='temporal downsampling rate (default: 1)')
     parser.add_argument(
@@ -61,9 +61,15 @@ def extract(model, loader, save_dir, device):
 
     for sample in tqdm.tqdm(loader, total=len(loader)):
         with torch.no_grad():
-            x = sample['clip'].to(device)
             name = sample['name'][0]
 
+            # if features already exist, the below process will be passes.
+            if os.path.exists(os.path.join(save_dir, name + '.pth')):
+                continue
+            if os.path.exists(os.path.join(save_dir, 'motion', name + '.pth')):
+                continue
+
+            x = sample['clip'].to(device)
             feats = model.extract_features(x)
 
             # if features are extracted by slowfast
@@ -86,15 +92,22 @@ def sliding_window_extract(model, loader, save_dir, window_size, device):
 
     for sample in tqdm.tqdm(loader, total=len(loader)):
         with torch.no_grad():
-            clip = sample['clip']
             name = sample['name'][0]
+
+            # if features already exist, the below process will be passes.
+            if os.path.exists(os.path.join(save_dir, name + '.pth')):
+                continue
+            if os.path.exists(os.path.join(save_dir, 'motion', name + '.pth')):
+                continue
+
+            clip = sample['clip']
             _, _, t, h, w = clip.shape
             zeros = torch.zeros(1, 3, window_size - 1, h, w)
             clip = torch.cat([clip, zeros], dim=2)
 
             feats = []
             for i in range(t):
-                x = clip[:, :, i:i+window_size].clone().detach().to(device)
+                x = clip[:, :, i:i + window_size].clone().detach().to(device)
                 feat = model.extract_features(x)
 
                 # if features are extracted by slowfast
